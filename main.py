@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Criado segunda-feira set 09/12/2024
+# @author: James Batista Figueiredo
+# script para buscar dados no GE Proficy Historian e gravar em CLPs
+
 from mudbus.client import ModbusTCPClient
 from datetime import datetime, timedelta
 
