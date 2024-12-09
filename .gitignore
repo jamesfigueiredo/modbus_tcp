@@ -1,0 +1,16 @@
+# Ignorar todos os arquivos com extensão .csv
+*.csv
+
+# Ignorar todos os arquivos com extensão .txt
+*.txt
+
+*.pkl
+
+# Ignorar venv
+venv/
+
+secrets.json
+
+teste.py
+
+__pycache__/
