@@ -5,7 +5,7 @@
 # @author: James Batista Figueiredo
 # script para buscar dados no GE Proficy Historian e gravar em CLPs
 
-from mudbus.client import ModbusTCPClient
+from modbus.client import ModbusTCPClient
 from datetime import datetime, timedelta
 
 from api_historian.get_token_api import get_token
