@@ -1,11 +1,11 @@
 import pandas as pd
 from modbus.client import ModbusTCPClient
+from prediction.get_modbus_config import load_configs
 from prediction.sarima import prediction_sarimax
 import json
 import os
 
-with open("modbus.json", 'r') as file:
-    data_mudbus = json.load(file)
+data_mudbus = load_configs()
     
 def read_values():
     for tag, config in data_mudbus.items():
