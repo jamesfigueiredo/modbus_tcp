@@ -2,8 +2,6 @@ import pandas as pd
 from modbus.client import ModbusTCPClient
 from prediction.get_modbus_config import load_configs
 from prediction.sarima import prediction_sarimax
-import json
-import os
 
 data_mudbus = load_configs()
     
