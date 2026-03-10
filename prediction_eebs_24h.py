@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Criado segunda-feira set 09/03/2026
+# @author: James Batista Figueiredo
+# script para ler gerar previsão valores vazões eebs ete norte com Sarima
+
 import pandas as pd
 from modbus.client import ModbusTCPClient
 from prediction.get_modbus_config import load_configs

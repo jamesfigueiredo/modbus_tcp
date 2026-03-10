@@ -14,7 +14,7 @@ def load_configs():
 
     # Verifica se o arquivo existe
     if not os.path.exists(secrets_path):
-        raise FileNotFoundError(f"Arquivo secrets.json não encontrado: {secrets_path}")
+        raise FileNotFoundError(f"Arquivo modbus.json não encontrado: {secrets_path}")
 
     # Carrega o arquivo JSON
     with open(secrets_path, 'r') as f:
