@@ -82,7 +82,7 @@ class ModbusTCPClient:
         try:
             self.logger.info(f"Escrevendo dados no CLP {self.ip_clp}")
             data = bytearray(len(data_list) * 4)
-            offset = start_offset
+            offset = 0
 
             for value in data_list:
                 set_real(data, offset, value)
