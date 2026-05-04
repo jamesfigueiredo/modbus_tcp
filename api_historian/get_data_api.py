@@ -267,14 +267,7 @@ def get_precipitation_data(lista_tags, start_date, start_hour, end_date, end_hou
         return(f'Algo deu errado!\n{e}')
 
 
-def get_calculated_data_average_15min(
-    lista_tags,
-    start_date,
-    start_hour,
-    end_date,
-    end_hour,
-    calculation_mode="RawAverage",
-):
+def get_calculated_data_average_15min(lista_tags, start_date, start_hour, end_date, end_hour):
     with open(PATH_TOKEN, 'r') as token_file:
         api_token = token_file.read().strip()
     headers = {'Accept': 'application/json', 'Authorization': f'Bearer {api_token}'}
@@ -285,6 +278,7 @@ def get_calculated_data_average_15min(
     end_iso = f"{end_date}T{end_hour}-03:00"
 
     interval_ms = 15 * 60 * 1000
+    calculation_mode = "RawAverage"
     count = 1
 
     tagname_list, timestamp_list, value_list, quality_list = [], [], [], []
@@ -302,12 +296,7 @@ def get_calculated_data_average_15min(
                 response.raise_for_status()
                 valores = response.json()
             except requests.exceptions.RequestException as e:
-                response_text = ""
-                if hasattr(e, "response") and e.response is not None:
-                    response_text = e.response.text
                 print(f"Erro ao consultar API calculated para a tag {tag}: {e}")
-                if response_text:
-                    print(f"Resposta da API calculated: {response_text}")
                 continue
             except json.JSONDecodeError as e:
                 print(f"Erro ao decodificar JSON calculated para a tag {tag}: {e}")
