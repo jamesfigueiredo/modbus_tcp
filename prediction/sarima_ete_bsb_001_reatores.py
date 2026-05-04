@@ -2,6 +2,7 @@ from datetime import datetime as dt
 from typing import Optional
 
 import pandas as pd
+from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 from api_historian.get_data_api import get_precipitation_data
 from api_historian.get_token_api import get_token
@@ -18,6 +19,8 @@ TAGS_ETE_BSB_001_REATORES = [
 FORECAST_FREQ = "15min"
 MIN_POINTS = 96
 MAX_INTERPOLATION_GAP = 4
+PRIMARY_MODEL = {"order": (1, 0, 1), "seasonal_order": (0, 1, 1, 96)}
+FALLBACK_MODEL = {"order": (1, 0, 0), "seasonal_order": (0, 0, 0, 0)}
 DAILY_LAG = pd.Timedelta(days=1)
 WEEKLY_LAG = pd.Timedelta(days=7)
 RECENT_WINDOW = 4
@@ -77,7 +80,7 @@ def _prepare_15min_series(
     return ts
 
 
-def _predict_single_slot(ts: pd.Series, target_ts: pd.Timestamp) -> Optional[float]:
+def _predict_single_slot_baseline(ts: pd.Series, target_ts: pd.Timestamp) -> Optional[float]:
     candidates = []
 
     daily_value = ts.get(target_ts - DAILY_LAG)
@@ -100,6 +103,25 @@ def _predict_single_slot(ts: pd.Series, target_ts: pd.Timestamp) -> Optional[flo
     total_weight = sum(weight for weight, _ in candidates)
     weighted_sum = sum(weight * value for weight, value in candidates)
     return round(weighted_sum / total_weight, 2)
+
+
+def _fit_model_with_fallback(ts: pd.Series):
+    try:
+        return SARIMAX(
+            ts,
+            order=PRIMARY_MODEL["order"],
+            seasonal_order=PRIMARY_MODEL["seasonal_order"],
+            enforce_stationarity=False,
+            enforce_invertibility=False,
+        ).fit(disp=False)
+    except Exception:
+        return SARIMAX(
+            ts,
+            order=FALLBACK_MODEL["order"],
+            seasonal_order=FALLBACK_MODEL["seasonal_order"],
+            enforce_stationarity=False,
+            enforce_invertibility=False,
+        ).fit(disp=False)
 
 
 def prediction_sarimax_ete_bsb_001_reatores(
@@ -137,12 +159,20 @@ def prediction_sarimax_ete_bsb_001_reatores(
         )
 
         if len(ts) < MIN_POINTS:
-            print(f"Poucos dados para {tag}")
-            continue
+            print(f"Poucos dados para {tag}; usando baseline.")
+        else:
+            try:
+                modelo = _fit_model_with_fallback(ts)
+                previsao = modelo.forecast(steps=steps)
+                previsao.index = forecast_index
+                previsoes_tabela[tag] = previsao.round(2).values
+                continue
+            except Exception as error:
+                print(f"Falha no SARIMAX para {tag}; usando baseline. Erro: {error}")
 
         previsoes = []
         for target_ts in forecast_index:
-            previsao = _predict_single_slot(ts, target_ts)
+            previsao = _predict_single_slot_baseline(ts, target_ts)
             if previsao is None:
                 print(f"Sem base suficiente para prever {tag} em {target_ts}")
                 previsoes = []
