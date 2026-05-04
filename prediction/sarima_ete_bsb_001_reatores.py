@@ -1,7 +1,6 @@
 from datetime import datetime as dt
 
 import pandas as pd
-from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 from api_historian.get_data_api import get_precipitation_data
 from api_historian.get_token_api import get_token
@@ -16,12 +15,14 @@ TAGS_ETE_BSB_001_REATORES = [
 
 
 FORECAST_FREQ = "15min"
-MIN_POINTS = 96 * 2
+MIN_POINTS = 96
 MAX_INTERPOLATION_GAP = 4
-
-PRIMARY_MODEL = {"order": (1, 0, 1), "seasonal_order": (0, 1, 1, 96)}
-FALLBACK_MODEL = {"order": (1, 0, 0), "seasonal_order": (0, 1, 1, 96)}
-LAST_RESORT_MODEL = {"order": (1, 0, 0), "seasonal_order": (0, 0, 0, 0)}
+DAILY_LAG = pd.Timedelta(days=1)
+WEEKLY_LAG = pd.Timedelta(days=7)
+RECENT_WINDOW = 4
+DAILY_WEIGHT = 0.6
+WEEKLY_WEIGHT = 0.3
+RECENT_WEIGHT = 0.1
 
 
 def _resolve_collection_window(days_history: int):
@@ -75,22 +76,29 @@ def _prepare_15min_series(
     return ts
 
 
-def _fit_model_with_fallback(ts: pd.Series):
-    last_error = None
+def _predict_single_slot(ts: pd.Series, target_ts: pd.Timestamp) -> float | None:
+    candidates = []
 
-    for model_config in (PRIMARY_MODEL, FALLBACK_MODEL, LAST_RESORT_MODEL):
-        try:
-            return SARIMAX(
-                ts,
-                order=model_config["order"],
-                seasonal_order=model_config["seasonal_order"],
-                enforce_stationarity=False,
-                enforce_invertibility=False,
-            ).fit(disp=False)
-        except Exception as error:
-            last_error = error
+    daily_value = ts.get(target_ts - DAILY_LAG)
+    if pd.notna(daily_value):
+        candidates.append((DAILY_WEIGHT, float(daily_value)))
 
-    raise last_error
+    weekly_value = ts.get(target_ts - WEEKLY_LAG)
+    if pd.notna(weekly_value):
+        candidates.append((WEEKLY_WEIGHT, float(weekly_value)))
+
+    recent_window = ts.loc[: target_ts - pd.Timedelta(seconds=1)].tail(RECENT_WINDOW)
+    if not recent_window.empty:
+        recent_mean = recent_window.mean()
+        if pd.notna(recent_mean):
+            candidates.append((RECENT_WEIGHT, float(recent_mean)))
+
+    if not candidates:
+        return None
+
+    total_weight = sum(weight for weight, _ in candidates)
+    weighted_sum = sum(weight * value for weight, value in candidates)
+    return round(weighted_sum / total_weight, 2)
 
 
 def prediction_sarimax_ete_bsb_001_reatores(
@@ -131,15 +139,17 @@ def prediction_sarimax_ete_bsb_001_reatores(
             print(f"Poucos dados para {tag}")
             continue
 
-        try:
-            modelo = _fit_model_with_fallback(ts)
-            previsao = modelo.forecast(steps=steps)
-        except Exception as error:
-            print(f"Falha ao ajustar modelo para {tag}: {error}")
-            continue
+        previsoes = []
+        for target_ts in forecast_index:
+            previsao = _predict_single_slot(ts, target_ts)
+            if previsao is None:
+                print(f"Sem base suficiente para prever {tag} em {target_ts}")
+                previsoes = []
+                break
+            previsoes.append(previsao)
 
-        previsao.index = forecast_index
-        previsoes_tabela[tag] = previsao.round(2).values
+        if previsoes:
+            previsoes_tabela[tag] = previsoes
 
     return previsoes_tabela
 
