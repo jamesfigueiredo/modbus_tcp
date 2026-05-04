@@ -146,7 +146,14 @@ def get_data_sulfato(lista_tags, start_date, start_hour, end_date, end_hour):
     return df
 
 
-def get_precipitation_data(lista_tags, start_date, start_hour, end_date, end_hour):
+def get_precipitation_data(
+    lista_tags,
+    start_date,
+    start_hour,
+    end_date,
+    end_hour,
+    check_current_value: bool = True,
+):
     # Ler o token de autenticação
     with open(PATH_TOKEN, 'r') as token_file:
         api_token = token_file.read().strip()
@@ -196,22 +203,23 @@ def get_precipitation_data(lista_tags, start_date, start_hour, end_date, end_hou
             print(f"URL último valor: {url_veryfy_letest_value}\nURL consulta dados: {url}")
     
             try:
-                # Antes de qualquer consulta verificar se temos valores no período solicitado
-                response_letest_value = requests.get(url_veryfy_letest_value, headers=headers, verify=False)
-                response_letest_value.raise_for_status()
-                letest_value = response_letest_value.json()
-                sample_latest_value = letest_value['Data'][0].get('Samples', [])
-                time_latest = sample_latest_value[0]['TimeStamp']
-                # Converter para datetime e ajusta para UTC-3
-                dt_local = pd.to_datetime(time_latest).tz_convert('America/Sao_Paulo')
-                #Formatar pt-BR
-                time_latest_formated = dt_local.strftime('%d/%m/%Y %H:%M')
-                # print(f"sample_latest_value:\n{time_latest_formated}")
-                
+                if check_current_value:
+                    # Antes de qualquer consulta verificar se temos valores no período solicitado
+                    response_letest_value = requests.get(url_veryfy_letest_value, headers=headers, verify=False)
+                    response_letest_value.raise_for_status()
+                    letest_value = response_letest_value.json()
+                    sample_latest_value = letest_value['Data'][0].get('Samples', [])
+                    time_latest = sample_latest_value[0]['TimeStamp']
+                    # Converter para datetime e ajusta para UTC-3
+                    dt_local = pd.to_datetime(time_latest).tz_convert('America/Sao_Paulo')
+                    #Formatar pt-BR
+                    time_latest_formated = dt_local.strftime('%d/%m/%Y %H:%M')
+                    # print(f"sample_latest_value:\n{time_latest_formated}")
+
                 response = requests.get(url, headers=headers, verify=False)
                 response.raise_for_status()  # Levanta erro se o status não for 200
                 valores = response.json()
-                
+
                 # com o endpoint raw foi necessário verificar se temos dados para tag no períod de consulta.
                 samples = valores['Data'][0].get('Samples', [])
                 # print(f'response:{response} - valores: {valores} - ')
