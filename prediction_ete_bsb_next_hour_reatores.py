@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Script para gerar previsao do proximo slot de 15 minutos
+# Script para gerar previsao da proxima hora (com impressao da janela de 24h)
 
 from modbus.client import ModbusTCPClient
-from prediction.sarima_ete_bsb_001_reatores import prediction_next_15min_ete_bsb_001_reatores
+from prediction.sarima_ete_bsb_reatores import prediction_next_hour_ete_bsb_reatores
 
 
 IP_CLP = "172.16.51.30"
@@ -20,8 +20,8 @@ TAG_OFFSETS = {
 }
 
 
-def write_next_hour_to_clp(next_slot_df):
-    if next_slot_df.empty:
+def write_next_hour_to_clp(next_hour_df):
+    if next_hour_df.empty:
         print("Sem previsao para escrita no CLP.")
         return
 
@@ -29,11 +29,11 @@ def write_next_hour_to_clp(next_slot_df):
     clp.connect()
     try:
         for tag, offset in TAG_OFFSETS.items():
-            if tag not in next_slot_df.columns:
+            if tag not in next_hour_df.columns:
                 print(f"Tag sem previsao: {tag}")
                 continue
 
-            value = float(next_slot_df[tag].iloc[0])
+            value = float(next_hour_df[tag].iloc[0])
             clp.write([value], start_offset=offset)
             print(f"Escrito {tag}={value} em start_offset={offset}")
     finally:
@@ -41,15 +41,14 @@ def write_next_hour_to_clp(next_slot_df):
 
 
 def main():
-    next_slot_df = prediction_next_15min_ete_bsb_001_reatores(
-        days_history=28,
+    next_hour_df = prediction_next_hour_ete_bsb_reatores(
+        days_history=84,
         same_weekday_only=False,
-        print_horizon=False,
-        horizon_steps=8,
+        print_24h=True,
     )
-    print("\nSaida operacional (proximo slot de 15 min):")
-    print(next_slot_df)
-    write_next_hour_to_clp(next_slot_df)
+    print("\nSaida operacional (somente proxima hora):")
+    print(next_hour_df)
+    write_next_hour_to_clp(next_hour_df)
 
 
 if __name__ == "__main__":
