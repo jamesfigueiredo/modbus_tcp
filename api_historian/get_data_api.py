@@ -278,7 +278,7 @@ def get_calculated_data_average_15min(lista_tags, start_date, start_hour, end_da
     end_iso = f"{end_date}T{end_hour}-03:00"
 
     interval_ms = 15 * 60 * 1000
-    calculation_mode = "RawAverage"
+    calculation_mode = "Average"
     count = 1
 
     tagname_list, timestamp_list, value_list, quality_list = [], [], [], []
