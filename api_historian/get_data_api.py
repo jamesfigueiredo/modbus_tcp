@@ -285,7 +285,7 @@ def get_calculated_data_average_15min(
     end_iso = f"{end_date}T{end_hour}-03:00"
 
     interval_ms = 15 * 60 * 1000
-    count = int(((end - start).total_seconds() // (15 * 60)) + 1)
+    count = 1
 
     tagname_list, timestamp_list, value_list, quality_list = [], [], [], []
 
@@ -336,6 +336,9 @@ def get_calculated_data_average_15min(
         df['TimeStamp'] = df['TimeStamp'].str.replace(r'\.\d+Z', '', regex=True)
         df['TimeStamp'] = pd.to_datetime(df['TimeStamp'])
         df['TimeStamp'] = df['TimeStamp'] - pd.Timedelta(hours=3)
+
+        if 'Quality' in df.columns:
+            df = df[df['Quality'] == 3]
 
         df = df[(df['TimeStamp'] >= start) & (df['TimeStamp'] <= end)]
         df['TimeStamp'] = df['TimeStamp'].apply(lambda x: x.isoformat())
