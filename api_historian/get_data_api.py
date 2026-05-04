@@ -146,6 +146,60 @@ def get_data_sulfato(lista_tags, start_date, start_hour, end_date, end_hour):
     return df
 
 
+def get_data_interpolated(lista_tags, start_date, start_hour, end_date, end_hour, interval_min=1):
+    """
+    Nova função otimizada para Cotas e Manutenção.
+    Utiliza o endpoint 'interpolated' para garantir estabilidade em períodos longos.
+    Default: 1 ponto a cada 1 minuto.
+    """
+    with open(PATH_TOKEN, 'r') as token_file:
+        api_token = token_file.read().strip()
+    headers = {'Accept': 'application/json', 'Authorization': f'Bearer {api_token}'}
+
+    start_datetime = pendulum.parse(f"{start_date}T{start_hour}", tz="America/Sao_Paulo")
+    end_datetime = pendulum.parse(f"{end_date}T{end_hour}", tz="America/Sao_Paulo")
+    total_minutes = end_datetime.diff(start_datetime).in_minutes()
+
+    intervalo_ms = interval_min * 60 * 1000
+    numero_amostras = (total_minutes // interval_min) + 1
+
+    start_iso = f"{start_date}T{start_hour}-03:00"
+    end_iso = f"{end_date}T{end_hour}-03:00"
+
+    tagname_list, timestamp_list, value_list, quality_list = [], [], [], []
+
+    try:
+        for tag in lista_tags:
+            url = f"{SEARCH_URL}/historian-rest-api/v1/datapoints/interpolated/{tag}/{start_iso}/{end_iso}/{numero_amostras}/{intervalo_ms}"
+            try:
+                response = requests.get(url, headers=headers, verify=False)
+                response.raise_for_status()
+                valores = response.json()
+                for data in valores.get('Data', []):
+                    tagname = data.get("TagName", "")
+                    for sample in data.get('Samples', []):
+                        tagname_list.append(tagname)
+                        timestamp_list.append(sample.get("TimeStamp"))
+                        value_list.append(sample.get("Value"))
+                        quality_list.append(sample.get("Quality"))
+            except Exception:
+                continue
+
+        df = pd.DataFrame({"TagName": tagname_list, "TimeStamp": timestamp_list, "Value": value_list, "Quality": quality_list})
+        if df.empty:
+            return df
+
+        df['TimeStamp'] = df['TimeStamp'].str.replace(r'\.\d+Z', '', regex=True)
+        df['TimeStamp'] = pd.to_datetime(df['TimeStamp']) - pd.Timedelta(hours=3)
+        df = df[df['Quality'] == 3]
+        df["Value"] = pd.to_numeric(df['Value'], errors="coerce")
+        df = df.dropna(subset=['Value'])
+        df['TimeStamp'] = df['TimeStamp'].apply(lambda x: x.isoformat())
+        return df
+    except Exception:
+        return pd.DataFrame()
+
+
 def get_precipitation_data(lista_tags, start_date, start_hour, end_date, end_hour):
     # Ler o token de autenticação
     with open(PATH_TOKEN, 'r') as token_file:

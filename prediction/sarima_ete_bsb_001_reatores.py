@@ -4,7 +4,7 @@ from typing import Optional
 import pandas as pd
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
-from api_historian.get_data_api import get_precipitation_data
+from api_historian.get_data_api import get_data_interpolated
 from api_historian.get_token_api import get_token
 
 
@@ -132,12 +132,13 @@ def prediction_sarimax_ete_bsb_001_reatores(
     get_token()
 
     window = _resolve_collection_window(days_history)
-    df = get_precipitation_data(
+    df = get_data_interpolated(
         TAGS_ETE_BSB_001_REATORES,
         window["start_date"],
         window["start_hour"],
         window["end_date"],
         window["end_hour"],
+        interval_min=1,
     )
 
     if df.empty:
