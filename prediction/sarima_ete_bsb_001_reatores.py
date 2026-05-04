@@ -1,5 +1,4 @@
 from datetime import datetime as dt
-from typing import Optional
 
 import pandas as pd
 
@@ -77,7 +76,7 @@ def _prepare_15min_series(
     return ts
 
 
-def _predict_single_slot(ts: pd.Series, target_ts: pd.Timestamp) -> Optional[float]:
+def _predict_single_slot(ts: pd.Series, target_ts: pd.Timestamp) -> float | None:
     candidates = []
 
     daily_value = ts.get(target_ts - DAILY_LAG)
