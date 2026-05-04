@@ -273,7 +273,7 @@ def get_calculated_data_average_15min(
     start_hour,
     end_date,
     end_hour,
-    calculation_mode=6,
+    calculation_mode=15,
 ):
     with open(PATH_TOKEN, 'r') as token_file:
         api_token = token_file.read().strip()
