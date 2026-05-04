@@ -16,12 +16,12 @@ TAGS_ETE_BSB_001_REATORES = [
 
 
 FORECAST_FREQ = "15min"
-MIN_POINTS = 96 * 3
+MIN_POINTS = 96 * 2
 MAX_INTERPOLATION_GAP = 4
 
-PRIMARY_MODEL = {"order": (1, 1, 1), "seasonal_order": (1, 1, 1, 96)}
-FALLBACK_MODEL = {"order": (1, 1, 1), "seasonal_order": (0, 1, 1, 96)}
-LAST_RESORT_MODEL = {"order": (1, 1, 1), "seasonal_order": (0, 0, 0, 0)}
+PRIMARY_MODEL = {"order": (1, 0, 1), "seasonal_order": (0, 1, 1, 96)}
+FALLBACK_MODEL = {"order": (1, 0, 0), "seasonal_order": (0, 1, 1, 96)}
+LAST_RESORT_MODEL = {"order": (1, 0, 0), "seasonal_order": (0, 0, 0, 0)}
 
 
 def _resolve_collection_window(days_history: int):
@@ -94,7 +94,7 @@ def _fit_model_with_fallback(ts: pd.Series):
 
 
 def prediction_sarimax_ete_bsb_001_reatores(
-    days_history: int = 28,
+    days_history: int = 7,
     steps: int = 1,
     same_weekday_only: bool = False,
 ) -> pd.DataFrame:
@@ -145,10 +145,10 @@ def prediction_sarimax_ete_bsb_001_reatores(
 
 
 def prediction_next_15min_ete_bsb_001_reatores(
-    days_history: int = 28,
+    days_history: int = 7,
     same_weekday_only: bool = False,
     print_horizon: bool = False,
-    horizon_steps: int = 8,
+    horizon_steps: int = 1,
 ) -> pd.DataFrame:
     forecast = prediction_sarimax_ete_bsb_001_reatores(
         days_history=days_history,

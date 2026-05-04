@@ -42,10 +42,10 @@ def write_next_15min_to_clp(next_slot_df):
 
 def main():
     next_slot_df = prediction_next_15min_ete_bsb_001_reatores(
-        days_history=28,
+        days_history=7,
         same_weekday_only=False,
         print_horizon=False,
-        horizon_steps=8,
+        horizon_steps=1,
     )
     print("\nSaida operacional (proximo slot de 15 min):")
     print(next_slot_df)
