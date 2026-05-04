@@ -2,7 +2,7 @@ from datetime import datetime as dt
 
 import pandas as pd
 
-from api_historian.get_data_api import get_calculated_data_average_15min
+from api_historian.get_data_api import get_precipitation_data
 from api_historian.get_token_api import get_token
 
 
@@ -109,7 +109,7 @@ def prediction_sarimax_ete_bsb_001_reatores(
     get_token()
 
     window = _resolve_collection_window(days_history)
-    df = get_calculated_data_average_15min(
+    df = get_precipitation_data(
         TAGS_ETE_BSB_001_REATORES,
         window["start_date"],
         window["start_hour"],
