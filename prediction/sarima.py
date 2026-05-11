@@ -14,9 +14,9 @@ def prediction_sarimax():
         "EEB.LNT.001.FIT.001.000.000",
         "EEB.LNT.003.FIT.001.000.000",
         "EEB.LNT.004.FIT.001.000.000",
+        "EEB.SEN.001.FIT.001.000.000",
         # "EEB.ASN.002.FIT.001.000.000",
         # "EEB.GUA.005.FIT.001.000.000",
-        # "EEB.SEN.001.FIT.001.000.000",
     ]
 
     start_date = str(dt.today().date() - timedelta(days=14))
